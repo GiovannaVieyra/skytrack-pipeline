@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from schema import parse_states
-from storage import escribir_snapshot
+from storage import escribir_snapshot_r2
 
 load_dotenv()
 
@@ -94,10 +94,10 @@ def main():
             if not rows:
                 log.warning("Snapshot vacio, no se escribe nada")
             else:
-                destino = escribir_snapshot(rows)
+                destino = escribir_snapshot_r2(rows)
                 log.info(
                     "Ciclo %d | %d aviones | creditos: %s | %s",
-                    ciclos, len(rows), creditos, destino.name,
+                    ciclos, len(rows), creditos, destino,
                 )
 
         except Exception as e:
