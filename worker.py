@@ -18,7 +18,7 @@ TOKEN_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protoc
 API_URL = "https://opensky-network.org/api/states/all"
 
 BBOX = (48.0, 55.0, 2.0, 12.0)
-INTERVALO = 60
+INTERVALO = 75
 TOKEN_MARGEN = timedelta(minutes=5)
 
 logging.basicConfig(
