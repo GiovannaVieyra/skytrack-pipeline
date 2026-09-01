@@ -67,6 +67,7 @@ class TokenManager:
         self._vence = datetime.now(timezone.utc) + timedelta(seconds=segundos)
         log.info("Token renovado, vence en %s segundos", segundos)
 
+
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=2, min=2, max=30))
 def pedir_estados(token):
     lamin, lamax, lomin, lomax = BBOX
@@ -81,7 +82,6 @@ def pedir_estados(token):
 
 
 def main():
-    
     faltantes = [v for v in (
         "OPENSKY_CLIENT_ID", "OPENSKY_CLIENT_SECRET",
         "R2_ACCOUNT_ENDPOINT", "R2_ACCESS_KEY_ID",
@@ -90,7 +90,16 @@ def main():
     if faltantes:
         log.error("Faltan variables de entorno: %s", ", ".join(faltantes))
         raise SystemExit(1)
-    
+
+    try:
+        prueba = requests.get(
+            "https://opensky-network.org/api/states/all?lamin=51&lamax=52&lomin=4&lomax=5",
+            timeout=20,
+        )
+        log.info("Prueba de conectividad: HTTP %s", prueba.status_code)
+    except Exception as e:
+        log.error("Prueba de conectividad fallo: %s", e)
+
     log.info("Worker iniciado | bbox=%s | intervalo=%ss", BBOX, INTERVALO)
     tokens = TokenManager()
     ciclos = 0
