@@ -47,22 +47,25 @@ class TokenManager:
     @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=2, min=4, max=60))
     def _renovar(self):
         log.info("Renovando token")
-        r = requests.post(
-            TOKEN_URL,
-            data={
-                "grant_type": "client_credentials",
-                "client_id": os.getenv("OPENSKY_CLIENT_ID"),
-                "client_secret": os.getenv("OPENSKY_CLIENT_SECRET"),
-            },
-            timeout=30,
-        )
-        r.raise_for_status()
+        try:
+            r = requests.post(
+                TOKEN_URL,
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": os.getenv("OPENSKY_CLIENT_ID"),
+                    "client_secret": os.getenv("OPENSKY_CLIENT_SECRET"),
+                },
+                timeout=30,
+            )
+            r.raise_for_status()
+        except Exception as e:
+            log.error("Fallo la renovacion del token: %s", e)
+            raise
         payload = r.json()
         self._token = payload["access_token"]
         segundos = payload.get("expires_in", 1800)
         self._vence = datetime.now(timezone.utc) + timedelta(seconds=segundos)
         log.info("Token renovado, vence en %s segundos", segundos)
-
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=2, min=2, max=30))
 def pedir_estados(token):
@@ -78,6 +81,16 @@ def pedir_estados(token):
 
 
 def main():
+    
+    faltantes = [v for v in (
+        "OPENSKY_CLIENT_ID", "OPENSKY_CLIENT_SECRET",
+        "R2_ACCOUNT_ENDPOINT", "R2_ACCESS_KEY_ID",
+        "R2_SECRET_ACCESS_KEY", "R2_BUCKET",
+    ) if not os.getenv(v)]
+    if faltantes:
+        log.error("Faltan variables de entorno: %s", ", ".join(faltantes))
+        raise SystemExit(1)
+    
     log.info("Worker iniciado | bbox=%s | intervalo=%ss", BBOX, INTERVALO)
     tokens = TokenManager()
     ciclos = 0
